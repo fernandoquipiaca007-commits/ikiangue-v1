@@ -62,7 +62,7 @@ em{font-style:normal;color:var(--yellow)}
 @keyframes cue{to{transform:translate(-50%,12px);opacity:0}}
 @media(max-width:820px){
   .hero-copy{padding-top:96px;max-width:none}
-  .title{font-size:clamp(50px,15.5vw,90px)}
+  .title{font-size:clamp(40px,13.6vw,90px);font-stretch:104%}
   .hud{left:var(--pad);right:var(--pad);width:auto;bottom:20px}
   .scroll-cue{display:none}
   .cta-row .btn{padding:13px 20px}
@@ -161,3 +161,4 @@ a.c-item:hover{border-color:var(--yellow)}
   .svc-grid{gap:10px}
 }
 @media(max-width:620px){.rail figure{height:auto}.rail figure.w{width:86vw}.rail figure.t{width:68vw}.rail figure.v{width:56vw}}
+@media(max-width:820px) and (max-height:760px){.hud{padding:11px 12px;bottom:12px}.meter{margin:8px 0 10px}.hold{padding:12px}.hero-copy{padding-top:84px}.title{margin:14px 0}.cta-row{margin-top:20px}}

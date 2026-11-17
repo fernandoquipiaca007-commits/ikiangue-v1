@@ -27,15 +27,29 @@
   const cFire=[[1,.95,.6],[1,.62,.12],[.95,.25,.04],[.35,.06,.02]];
   function lerpC(t){const k=Math.min(2.999,t*3),i=k|0,f=k-i,a=cFire[i],b=cFire[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]}
 
+  let KS=1,KV=1;const hero=cv.parentElement,ctaRow=document.querySelector('.cta-row');
   function layout(){
-    const w=cv.clientWidth,h=cv.clientHeight;R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix();
-    const mob=w/h<.9;
-    if(mob){ext.position.set(-.85,-1.55,0);ext.scale.setScalar(.55);firePos.set(1.05,-2.1,0);C.position.set(0,0,13)}
-    else{ext.position.set(1.9,-.15,0);ext.scale.setScalar(.68);firePos.set(4.1,-1.05,0);C.position.set(0,1.2,11)}
-    braz.position.copy(firePos);braz.scale.setScalar(mob?.6:.9);
+    let w=cv.clientWidth,h=cv.clientHeight;const mob=w/h<.9;
+    if(mob){
+      // encaixa a cena no espaço livre entre os botões e o painel
+      hero.style.minHeight='';
+      const need=Math.max(190,Math.min(260,innerHeight*.27));
+      let hr=hero.getBoundingClientRect(),top=ctaRow.getBoundingClientRect().bottom-hr.top+18,bot=hud.getBoundingClientRect().top-hr.top-14;
+      if(bot-top<need){hero.style.minHeight=Math.ceil(hr.height+need-(bot-top))+'px';hr=hero.getBoundingClientRect();top=ctaRow.getBoundingClientRect().bottom-hr.top+18;bot=hud.getBoundingClientRect().top-hr.top-14}
+      w=cv.clientWidth;h=cv.clientHeight;R.setSize(w,h,false);C.aspect=w/h;C.position.set(0,0,13);C.fov=35;C.updateProjectionMatrix();
+      const wpp=2*13*Math.tan(T.MathUtils.degToRad(17.5))/h,Y=px=>(h/2-px)*wpp,topY=Y(top),botY=Y(bot),halfW=h*wpp*C.aspect/2;
+      const sc=Math.min(.62,(topY-botY)/4.4,halfW*.34);
+      ext.scale.setScalar(sc);ext.position.set(-halfW*.42,botY+1.62*sc,0);
+      const bs=sc*1.05;firePos.set(halfW*.52,botY+1.2*bs,0);braz.position.copy(firePos);braz.scale.setScalar(bs);
+      KS=sc/.62;KV=KS*.62;
+    }else{
+      hero.style.minHeight='';R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix();
+      ext.position.set(1.9,-.15,0);ext.scale.setScalar(.68);firePos.set(4.1,-1.05,0);C.position.set(0,1.2,11);
+      braz.position.copy(firePos);braz.scale.setScalar(.9);KS=1;KV=1;
+    }
     fire.m.uniforms.uPix.value=smoke.m.uniforms.uPix.value=dust.m.uniforms.uPix.value=DPR*(h/9);
   }
-  addEventListener('resize',layout);layout();
+  addEventListener('resize',layout);layout();document.fonts&&document.fonts.ready.then(layout);
 
   let mx=0,my=0;addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5},{passive:true});
   const on=()=>{spraying=true;btn.classList.add('on')},off=()=>{spraying=false;btn.classList.remove('on')};
@@ -61,18 +75,18 @@
     if(level<=0&&!outAt){outAt=now;hud.classList.add('out');st.textContent='EXTINTO';txt.textContent='Risco controlado ✓'}
     if(outAt&&!spraying&&now-outAt>4200){level=Math.min(1,level+dt*.35);if(level>.15){outAt=0;hud.classList.remove('out');st.textContent='EM CHAMAS';txt.textContent='Mantenha premido para apagar'}}
     const rate=Math.floor(level*9+Math.random());
-    for(let k=0;k<rate;k++)emit(fire,firePos.x+rnd(-.42,.42)*(.4+level*.6),firePos.y+rnd(0,.15),firePos.z+rnd(-.3,.3),rnd(-.15,.15),rnd(1.2,2.6)*(.5+level*.6),0,rnd(.5,1.1));
-    if(Math.random()<.5+level*.4)emit(smoke,firePos.x+rnd(-.3,.3),firePos.y+1+level,firePos.z,rnd(-.1,.3),rnd(.6,1),0,rnd(2,3.5));
+    for(let k=0;k<rate;k++)emit(fire,firePos.x+rnd(-.42,.42)*(.4+level*.6)*KS,firePos.y+rnd(0,.15)*KS,firePos.z+rnd(-.3,.3)*KS,rnd(-.15,.15)*KS,rnd(1.2,2.6)*(.5+level*.6)*KV,0,rnd(.5,1.1));
+    if(Math.random()<.5+level*.4)emit(smoke,firePos.x+rnd(-.3,.3)*KS,firePos.y+(1+level)*KV,firePos.z,rnd(-.1,.3)*KS,rnd(.6,1)*KV,0,rnd(2,3.5));
     if(spraying){
       level=Math.max(0,level-dt*.42);
-      const d=new T.Vector3().subVectors(firePos.clone().add(new T.Vector3(0,.6,0)),tw).normalize();
-      for(let k=0;k<26;k++){const sp=rnd(7,11);emit(dust,tw.x,tw.y,tw.z,d.x*sp+rnd(-.9,.9),d.y*sp+rnd(-.7,.9),d.z*sp+rnd(-.9,.9),rnd(.7,1.4))}
+      const d=new T.Vector3().subVectors(firePos.clone().add(new T.Vector3(0,.6*KS,0)),tw).normalize();
+      for(let k=0;k<26;k++){const sp=rnd(7,11)*KS;emit(dust,tw.x,tw.y,tw.z,d.x*sp+rnd(-.9,.9)*KS,d.y*sp+rnd(-.7,.9)*KS,d.z*sp+rnd(-.9,.9)*KS,rnd(.7,1.4))}
     }
     bar.style.width=(level*100).toFixed(1)+'%';
     fireLight.position.set(firePos.x,firePos.y+.8,firePos.z+.8);coal.material.color.setRGB(.16+level*.5,.05+level*.12,.02);fireLight.intensity=level*(5+Math.sin(t*23)*1.2+Math.sin(t*7)*1.5);
-    step(fire,dt,(s,i,p)=>{s.v[i*3]+=Math.sin(t*6+i)*.04;const c=lerpC(1-p);s.Cc.set(c,i*3);s.Sz[i]=(.3+.75*p)*(.45+level*.6);s.A[i]=Math.min(1,p*2.2)*.42});
-    step(smoke,dt,(s,i,p)=>{s.Cc.set([.16,.15,.14],i*3);s.Sz[i]=1.6+(1-p)*3;s.A[i]=Math.sin(p*Math.PI)*.22});
-    step(dust,dt,(s,i,p)=>{s.v[i*3]*=.925;s.v[i*3+1]=s.v[i*3+1]*.93+.25*dt;s.v[i*3+2]*=.925;s.Cc.set([.94,.95,.97],i*3);s.Sz[i]=.35+(1-p)*2.6;s.A[i]=Math.min(1,p*1.6)*.55});
+    step(fire,dt,(s,i,p)=>{s.v[i*3]+=Math.sin(t*6+i)*.04;const c=lerpC(1-p);s.Cc.set(c,i*3);s.Sz[i]=(.3+.75*p)*(.45+level*.6)*KS;s.A[i]=Math.min(1,p*2.2)*.42});
+    step(smoke,dt,(s,i,p)=>{s.Cc.set([.16,.15,.14],i*3);s.Sz[i]=(1.6+(1-p)*3)*KS;s.A[i]=Math.sin(p*Math.PI)*.22});
+    step(dust,dt,(s,i,p)=>{s.v[i*3]*=.925;s.v[i*3+1]=s.v[i*3+1]*.93+.25*dt*KS;s.v[i*3+2]*=.925;s.Cc.set([.94,.95,.97],i*3);s.Sz[i]=(.35+(1-p)*2.6)*KS;s.A[i]=Math.min(1,p*1.6)*.55});
     R.render(S,C);
   }
   function step(s,dt,f){
